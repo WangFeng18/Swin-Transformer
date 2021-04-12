@@ -19,7 +19,7 @@ from timm.utils import NativeScaler, get_state_dict, ModelEma
 
 from datasets import build_dataset
 from engine import train_one_epoch, evaluate
-from SwinTransformer import Swin_T, Swin_S, Swin_B, Swin_L
+import SwinTransformer
 import utils
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -34,7 +34,7 @@ def get_args_parser():
     parser.add_argument('--epochs', default=300, type=int)
 
     # Model parameters
-    parser.add_argument('--model', default='swin_t', type=str, metavar='MODEL',
+    parser.add_argument('--model', default='Swin_T', type=str, metavar='MODEL',
                         help='Name of model to train')
     parser.add_argument('--input-size', default=224, type=int, help='images input size')
 
@@ -216,7 +216,7 @@ def main(args):
     #     drop_path_rate=args.drop_path,
     #     drop_block_rate=None,
     # )
-    model = Swin_T(num_classes=args.nb_classes, drop_path_rate=args.drop_path)
+    model = getattr(SwinTransformer, args.model)(num_classes=args.nb_classes, drop_path_rate=args.drop_path)
     model.to(device)
 
     model_without_ddp = model
