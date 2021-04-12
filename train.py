@@ -230,7 +230,7 @@ def main(args):
     args.lr = linear_scaled_lr
 
     linear_scaled_warmup_lr = args.warmup_lr * args.batch_size * utils.get_world_size() / 512.0
-    args.lr = linear_scaled_warmup_lr
+    args.warmup_lr = linear_scaled_warmup_lr
 
     optimizer = create_optimizer(args, model_without_ddp)
     loss_scaler = NativeScaler()
