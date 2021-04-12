@@ -19,7 +19,7 @@ from timm.utils import NativeScaler, get_state_dict, ModelEma
 
 from datasets import build_dataset
 from engine import train_one_epoch, evaluate
-from model import Swin_T, Swin_S, Swin_B, Swin_L
+from SwinTransformer import Swin_T, Swin_S, Swin_B, Swin_L
 import utils
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
