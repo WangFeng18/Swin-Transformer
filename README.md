@@ -9,17 +9,20 @@ Train on ImageNet:
 
 Train Swin-T
 ```
-python -m torch.distributed.launch --nproc_per_node=4 --use_env train.py --model Swin_T --batch-size 192 --drop-path 0.2 --data-path ~/ILSVRC2012/ --output_dir /data/SwinTransformer_exp/SwinT/
+python -m torch.distributed.launch --nproc_per_node=4 --use_env train.py --model Swin_T \
+--batch-size 192 --drop-path 0.2 --data-path ~/ILSVRC2012/ --output_dir /data/SwinTransformer_exp/SwinT/
 ```
 
 Train Swin-S
 ```
-python -m torch.distributed.launch --nproc_per_node=4 --use_env train.py --model Swin_S --batch-size 192 --drop-path 0.3 --data-path ~/ILSVRC2012/ --output_dir /data/SwinTransformer_exp/SwinS/
+python -m torch.distributed.launch --nproc_per_node=4 --use_env train.py --model Swin_S \
+--batch-size 192 --drop-path 0.3 --data-path ~/ILSVRC2012/ --output_dir /data/SwinTransformer_exp/SwinS/
 ```
 
 Train Swin-B
 ```
-python -m torch.distributed.launch --nproc_per_node=4 --use_env train.py --model Swin_B --batch-size 192 --drop-path 0.5 --data-path ~/ILSVRC2012/ --output_dir /data/SwinTransformer_exp/SwinB/
+python -m torch.distributed.launch --nproc_per_node=4 --use_env train.py --model Swin_B \
+--batch-size 192 --drop-path 0.5 --data-path ~/ILSVRC2012/ --output_dir /data/SwinTransformer_exp/SwinB/
 ```
 
 ### TODO
