@@ -18,7 +18,7 @@ class WMSA(nn.Module):
         self.head_dim = head_dim 
         self.n_heads = input_dim/head_dim
         self.window_size = window_size
-        self.embedding_layer = nn.Linear(self.input_dim, 3*self.input_dim, bias=False)
+        self.embedding_layer = nn.Linear(self.input_dim, 3*self.input_dim, bias=True)
         self.relative_position_params = nn.Parameter(torch.randn(2 * window_size - 1, 2 * window_size -1))
         self.linear = nn.Linear(self.input_dim, self.output_dim)
 
@@ -72,7 +72,7 @@ class WMSA(nn.Module):
             sim.masked_fill_(attn_mask, float("-inf"))
 
         probs = nn.functional.softmax(sim, dim=-1)
-        output = torch.einsum('hbwpp,hbwpc->hbwpc', probs, v)
+        output = torch.einsum('hbwij,hbwjc->hbwic', probs, v)
         output = rearrange(output, 'h b w p c -> b w p (h c)')
         output = self.linear(output)
         output = rearrange(output, 'b (w1 w2) (p1 p2) c -> b (w1 p1) (w2 p2) c', w1=h_windows, p1=self.window_size)
