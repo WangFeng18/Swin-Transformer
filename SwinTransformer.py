@@ -158,11 +158,9 @@ class SwinTransformer(nn.Module):
         self.stage3 = nn.Sequential(*self.stage3)
         self.stage4 = nn.Sequential(*self.stage4)
 
+        self.norm_last = nn.LayerNorm(dim * 8)
         self.mean_pool = Reduce('b h w c -> b c', reduction='mean')
-        self.classifier = nn.Sequential(
-            nn.LayerNorm(dim * 8),
-            nn.Linear(8*dim, num_classes)
-        )
+        self.classifier = nn.Linear(8*dim, num_classes) if num_classes > 0 else nn.Identity()
 
         self.apply(self._init_weights)
     
@@ -181,6 +179,7 @@ class SwinTransformer(nn.Module):
         x = self.stage2(x)
         x = self.stage3(x)
         x = self.stage4(x)
+        x = self.norm_last(x)
 
         x = self.mean_pool(x)
         x = self.classifier(x)
