@@ -5,7 +5,7 @@ import random
 from einops import rearrange
 
 from SwinTransformer import Swin_T, WMSA
-from alignment.SwinTrans_msra import SwinTransformer, WindowAttention
+from alignment.SwinTrans_msra import SwinTransformer, WindowAttention, window_partition, window_reverse
 
 def _fix_init(m):
     if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
@@ -26,14 +26,65 @@ def setup_seed(seed):
      random.seed(seed)
      torch.backends.cudnn.deterministic = True
 
-setup_seed(0)
 
 # a = Swin_T(10, drop_path_rate=0.0).cuda()
 # print(a)
+setup_seed(0)
+input = torch.rand(2,21,21,96).cuda()
+
+window_size = 7
+setup_seed(0)
 a = WMSA(input_dim=96, output_dim=96, head_dim=32, window_size=7, type='W').cuda()
 
 setup_seed(0)
 b = WindowAttention(dim=96, window_size=[7,7], num_heads=3).cuda()
+
+output_a = a(input)
+print(output_a)
+
+x = input
+# x = x.view(B, H, W, C)
+shift_size = 0
+# cyclic shift
+if shift_size > 0:
+    shifted_x = torch.roll(x, shifts=(-shift_size, -shift_size), dims=(1, 2))
+else:
+    shifted_x = x
+# partition windows
+x_windows = window_partition(shifted_x, window_size)  # nW*B, window_size, window_size, C
+x_windows = x_windows.view(-1, window_size * window_size, 96)  # nW*B, window_size*window_size, C
+# W-MSA/SW-MSA
+
+H, W = 21,21
+img_mask = torch.zeros((1, H, W, 1))  # 1 H W 1
+h_slices = (slice(0, -window_size),
+            slice(-window_size, -shift_size),
+            slice(-shift_size, None))
+w_slices = (slice(0, -window_size),
+            slice(-window_size, -shift_size),
+            slice(-shift_size, None))
+cnt = 0
+for h in h_slices:
+    for w in w_slices:
+        img_mask[:, h, w, :] = cnt
+        cnt += 1
+mask_windows = window_partition(img_mask, window_size)  # nW, window_size, window_size, 1
+mask_windows = mask_windows.view(-1, window_size * window_size)
+attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
+attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100.0)).masked_fill(attn_mask == 0, float(0.0)).cuda()
+
+attn_windows = b(x_windows, mask=attn_mask)  # nW*B, window_size*window_size, C
+
+# merge windows
+attn_windows = attn_windows.view(-1, window_size, window_size, 96)
+shifted_x = window_reverse(attn_windows, window_size, H, W)  # B H' W' C
+
+# reverse cyclic shift
+if shift_size > 0:
+    x = torch.roll(shifted_x, shifts=(shift_size, shift_size), dims=(1, 2))
+else:
+    x = shifted_x
+print(x)
 #b = Swin_T(10, drop_path_rate=0.0).cuda()
 
 # i = 0
@@ -41,12 +92,3 @@ b = WindowAttention(dim=96, window_size=[7,7], num_heads=3).cuda()
 #     print(c)
 #     print(d)
 #     i += 1
-
-dummy_inputb = torch.rand(2*9,49,96).cuda()
-dummy_inputa = rearrange(dummy_inputb, '(b W1 W2) (N1 N2) C -> b (W1 N1) (W2 N2) C', b=2,W1=3,N1=7)
-output1 = a(dummy_inputa)
-print(output1.size())
-output2 = b(dummy_inputb)
-output2 = rearrange(output2, '(b W1 W2) (N1 N2) C -> b (W1 N1) (W2 N2) C', W1=3, W2=3, N1=7)
-print(output2.size())
-
