@@ -34,10 +34,9 @@ a = WMSA(input_dim=96, output_dim=96, head_dim=32, window_size=7, type='W').cuda
 
 setup_seed(0)
 b = WindowAttention(dim=96, window_size=[7,7], num_heads=3).cuda()
-print(b)
 #b = Swin_T(10, drop_path_rate=0.0).cuda()
 
-i = 0
+# i = 0
 # for c, d in zip(a.named_parameters(), b.named_parameters()):
 #     print(c)
 #     print(d)
@@ -46,7 +45,8 @@ i = 0
 dummy_inputb = torch.rand(2*9,49,96).cuda()
 dummy_inputa = rearrange(dummy_inputb, '(b W1 W2) (N1 N2) C -> b (W1 N1) (W2 N2) C', b=2,W1=3,N1=7)
 output1 = a(dummy_inputa)
-print(output1)
+print(output1.size())
 output2 = b(dummy_inputb)
-print(output2)
+output2 = rearrange(output2, '(b W1 W2) (N1 N2) C -> b (W1 N1) (W2 N2) C', W1=3, W2=3, N1=7)
+print(output2.size())
 

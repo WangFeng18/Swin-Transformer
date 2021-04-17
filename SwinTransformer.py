@@ -17,6 +17,7 @@ class WMSA(nn.Module):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.head_dim = head_dim 
+        self.scale = self.head_dim ** -0.5
         self.n_heads = input_dim//head_dim
         self.window_size = window_size
         self.type=type
@@ -70,11 +71,10 @@ class WMSA(nn.Module):
         x = rearrange(x, 'b w1 w2 p1 p2 c -> b (w1 w2) (p1 p2) c', p1=self.window_size, p2=self.window_size)
         qkv = self.embedding_layer(x)
         q, k, v = rearrange(qkv, 'b nw np (threeh c) -> threeh b nw np c', c=self.head_dim).chunk(3, dim=0)
-        sim = torch.einsum('hbwpc,hbwqc->hbwpq', q, k)/math.sqrt(q.size(-1))
+        sim = torch.einsum('hbwpc,hbwqc->hbwpq', q, k) * self.scale
 
         # Adding learnable relative embedding
         sim = sim + rearrange(self.relative_embedding(), 'h p q -> h 1 1 p q')
-
         # Using Attn Mask to distinguish different subwindows.
         if self.type != 'W':
             attn_mask = self.generate_mask(h_windows, self.window_size, shift=self.window_size//2)
@@ -91,7 +91,7 @@ class WMSA(nn.Module):
     
     def relative_embedding(self):
         cord = torch.tensor(np.array([[i, j] for i in range(self.window_size) for j in range(self.window_size)]))
-        relation = cord[None, :, :] - cord[:, None, :]
+        relation = cord[:, None, :] - cord[None, :, :] + self.window_size -1
         # negative is allowed
         return self.relative_position_params[:, relation[:,:,0], relation[:,:,1]]
 
