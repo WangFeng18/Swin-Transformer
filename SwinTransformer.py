@@ -12,18 +12,24 @@ class WMSA(nn.Module):
     """ Self-attention module in Swin Transformer
     """
 
-    def __init__(self, input_dim, output_dim, head_dim, window_size):
+    def __init__(self, input_dim, output_dim, head_dim, window_size, type):
         super(WMSA, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.head_dim = head_dim 
         self.n_heads = input_dim//head_dim
         self.window_size = window_size
+        self.type=type
         self.embedding_layer = nn.Linear(self.input_dim, 3*self.input_dim, bias=True)
-        self.relative_position_params = nn.Parameter(torch.randn(self.n_heads, 2 * window_size - 1, 2 * window_size -1))
+
+        # TODO recover
+        # self.relative_position_params = nn.Parameter(torch.zeros(self.n_heads, 2 * window_size - 1, 2 * window_size -1))
+        self.relative_position_params = nn.Parameter(torch.zeros((2 * window_size - 1)*(2 * window_size -1), self.n_heads))
+
         self.linear = nn.Linear(self.input_dim, self.output_dim)
 
         trunc_normal_(self.relative_position_params, std=.02)
+        self.relative_position_params = torch.nn.Parameter(self.relative_position_params.view(2*window_size-1, 2*window_size-1, self.n_heads).transpose(1,2).transpose(0,1))
 
     def generate_mask(self, w, p, shift):
         """ generating the mask of SW-MSA
@@ -53,6 +59,7 @@ class WMSA(nn.Module):
         Returns:
             output: tensor shape [b h w c]
         """
+        print(self.type)
         if self.type!='W': x = torch.roll(x, shifts=(-self.window_size//2, -self.window_size//2), dims=(1,2))
 
         x = rearrange(x, 'b (w1 p1) (w2 p2) c -> b w1 w2 p1 p2 c', p1=self.window_size, p2=self.window_size)
@@ -103,7 +110,7 @@ class Block(nn.Module):
 
         print("Block Initial Type: {}, drop_path_rate:{:.6f}".format(self.type, drop_path))
         self.ln1 = nn.LayerNorm(input_dim)
-        self.msa = WMSA(input_dim, input_dim, head_dim, window_size)
+        self.msa = WMSA(input_dim, input_dim, head_dim, window_size, self.type)
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         self.ln2 = nn.LayerNorm(input_dim)
         self.mlp = nn.Sequential(
