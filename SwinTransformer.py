@@ -5,8 +5,7 @@ import numpy as np
 from thop import profile
 from einops import rearrange 
 from einops.layers.torch import Rearrange, Reduce
-from layer import DropPath
-from timm.models.layers import trunc_normal_
+from timm.models.layers import trunc_normal_, DropPath
 
 class WMSA(nn.Module):
     """ Self-attention module in Swin Transformer
@@ -132,27 +131,29 @@ class SwinTransformer(nn.Module):
         self.dim = dim
         self.head_dim = 32
         self.window_size = 7
-        self.patch_partition = Rearrange('b c (h1 sub_h) (w1 sub_w) -> b h1 w1 (c sub_h sub_w)', sub_h=4, sub_w=4)
+        # self.patch_partition = Rearrange('b c (h1 sub_h) (w1 sub_w) -> b h1 w1 (c sub_h sub_w)', sub_h=4, sub_w=4)
 
         # drop path rate for each layer
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(config))]
 
         begin = 0
-        self.stage1 = [nn.Linear(48, dim), nn.LayerNorm(dim)] + \
+        self.stage1 = [nn.Conv2d(3, dim, kernel_size=4, stride=4),
+                       Rearrange('b c h w -> b h w c'),
+                       nn.LayerNorm(dim),] + \
                       [Block(dim, dim, self.head_dim, self.window_size, dpr[i+begin], 'W' if not i%2 else 'SW', input_resolution//4) 
                       for i in range(config[0])]
         begin += config[0]
-        self.stage2 = [Rearrange('b (h neih) (w neiw) c -> b h w (neih neiw c)', neih=2, neiw=2), 
+        self.stage2 = [Rearrange('b (h neih) (w neiw) c -> b h w (neiw neih c)', neih=2, neiw=2), 
                        nn.LayerNorm(4*dim), nn.Linear(4*dim, 2*dim, bias=False),] + \
                       [Block(2*dim, 2*dim, self.head_dim, self.window_size, dpr[i+begin], 'W' if not i%2 else 'SW', input_resolution//8)
                       for i in range(config[1])]
         begin += config[1]
-        self.stage3 = [Rearrange('b (h neih) (w neiw) c -> b h w (neih neiw c)', neih=2, neiw=2), 
+        self.stage3 = [Rearrange('b (h neih) (w neiw) c -> b h w (neiw neih c)', neih=2, neiw=2), 
                        nn.LayerNorm(8*dim), nn.Linear(8*dim, 4*dim, bias=False),] + \
                       [Block(4*dim, 4*dim, self.head_dim, self.window_size, dpr[i+begin], 'W' if not i%2 else 'SW',input_resolution//16)
                       for i in range(config[2])]
         begin += config[2]
-        self.stage4 = [Rearrange('b (h neih) (w neiw) c -> b h w (neih neiw c)', neih=2, neiw=2), 
+        self.stage4 = [Rearrange('b (h neih) (w neiw) c -> b h w (neiw neih c)', neih=2, neiw=2), 
                        nn.LayerNorm(16*dim), nn.Linear(16*dim, 8*dim, bias=False),] + \
                       [Block(8*dim, 8*dim, self.head_dim, self.window_size, dpr[i+begin], 'W' if not i%2 else 'SW', input_resolution//32)
                       for i in range(config[3])]
@@ -167,7 +168,7 @@ class SwinTransformer(nn.Module):
         self.classifier = nn.Linear(8*dim, num_classes) if num_classes > 0 else nn.Identity()
 
         self.apply(self._init_weights)
-    
+
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=.02)
@@ -178,7 +179,6 @@ class SwinTransformer(nn.Module):
             nn.init.constant_(m.weight, 1.0)
 
     def forward(self, x):
-        x = self.patch_partition(x)
         x = self.stage1(x)
         x = self.stage2(x)
         x = self.stage3(x)
