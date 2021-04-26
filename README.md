@@ -4,6 +4,12 @@
 
 This repository contains the implementation of [Swin Transformer](https://arxiv.org/abs/2103.14030), and the training codes on ImageNet datasets. 
 
+|Model|Epoch|acc@1(our)|acc@5(our)|acc@1(official)|acc@5(official)|url|
+
+|---|---|---|---|---|---|---|
+|Swin-T|300|80.9|95.4|81.2|95.5|[here](https://drive.google.com/file/d/1PB_lZTaU9WmkTPFjVu1gMw7TF42x6IWf/view?usp=sharing) |
+
+
 ### Usage
 Train on ImageNet:
 
@@ -25,8 +31,6 @@ python -m torch.distributed.launch --nproc_per_node=4 --use_env train.py --model
 --batch-size 192 --drop-path 0.5 --data-path ~/ILSVRC2012/ --output_dir /data/SwinTransformer_exp/SwinB/
 ```
 
-### TODO
-Training on ImageNet and give the detailed results.
 
 ### Reference
 The training process involves many training and augmentation tricks, such as stochastic depth, mixup, cutmix and random erasing. I borrow large from Deit (https://github.com/facebookresearch/deit). 
