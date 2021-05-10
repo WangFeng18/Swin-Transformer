@@ -7,7 +7,7 @@ This repository contains the implementation of [Swin Transformer](https://arxiv.
 Our implementation is highly based on einops, which makes the implementation more concise, and easy to be understand. (Intuitively, we use only 200 lines of codes compared with ~600 lines of official codes.) Besides, our implementation keeps the same training speed.
 
 
-|Model|Epoch|acc@1(our)|acc@5(our)|acc@1(official)|acc@5(official)|url|
+|Model|Epoch|acc@1(our)|acc@5(our)|acc@1(official)|acc@5(official)|pretrained model|
 |---|---|---|---|---|---|---|
 |Swin-T|300|80.9|95.4|81.2|95.5|[here](https://drive.google.com/file/d/1PB_lZTaU9WmkTPFjVu1gMw7TF42x6IWf/view?usp=sharing) |
 
