@@ -1,8 +1,11 @@
 ![Swin Transformer](./concept.png)
 
-### Implementation of Swin Transformer
+### Accuracy Aligned. Concise Implementation of Swin Transformer
 
-This repository contains the implementation of [Swin Transformer](https://arxiv.org/abs/2103.14030), and the training codes on ImageNet datasets. 
+This repository contains the implementation of [Swin Transformer](https://arxiv.org/abs/2103.14030), and the training codes on ImageNet datasets. We have aligned the output of our network with the official one, that is, using the same input and random seed, the output is identical to the official one.
+
+Our implementation is highly based on einops, which makes the implementation more concise, and easy to be understand. (Intuitively, we use only 200 lines of codes compared with ~600 lines of official codes.) Besides, our implementation keeps the same training speed.
+
 
 |Model|Epoch|acc@1(our)|acc@5(our)|acc@1(official)|acc@5(official)|url|
 |---|---|---|---|---|---|---|
