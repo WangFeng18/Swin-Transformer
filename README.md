@@ -9,7 +9,7 @@ Our implementation is highly based on einops, which makes the implementation mor
 
 |Model|Epoch|acc@1(our)|acc@5(our)|acc@1(official)|acc@5(official)|pretrained model|
 |---|---|---|---|---|---|---|
-|Swin-T|300|80.9|95.4|81.2|95.5|[here](https://drive.google.com/file/d/1PB_lZTaU9WmkTPFjVu1gMw7TF42x6IWf/view?usp=sharing) |
+|Swin-T|300|81.3|95.5|81.2|95.5|[here](https://drive.google.com/file/d/1PB_lZTaU9WmkTPFjVu1gMw7TF42x6IWf/view?usp=sharing) |
 
 
 ### Usage
